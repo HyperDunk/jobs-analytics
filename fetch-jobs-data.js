@@ -22,10 +22,9 @@ function query1(company, jobtype, title, startDate, endDate) {
 }
 
 var i = 0;
-var timedCountriesCount = [];
 
 function query2() {
-
+	var timedCountriesCount = [];
 	var companiesList = ["Gestion Estrategica", "GB Consultora"];
 	var dates = [["2012-01-01T00:00:00Z","2012-01-31T00:00:00Z", "Jan12"],
 				["2012-02-01T00:00:00Z","2012-02-28T00:00:00Z", "Feb12"],
@@ -52,35 +51,37 @@ function query2() {
 				["2013-11-01T00:00:00Z","2013-11-30T00:00:00Z", "Nov13"],
 				["2013-12-01T00:00:00Z","2013-12-31T00:00:00Z", "Dec13"]];
 	i = dates.length-1;
-	getCountriesCountByTime(companiesList, dates, dates[i][0], dates[i][1]);
+	getCountriesCountByTime(companiesList, dates, dates[i][0], dates[i][1], timedCountriesCount);
 
 }
 
 
-function getCountriesCountByTime(companiesList, dates, startDate, endDate) {
+function getCountriesCountByTime(companiesList, dates, startDate, endDate, timedCountriesCount) {
 	//var companyCountriesCount = [];
 	var count = companiesList.length;
 	var columnObject = new Object();
-	columnObject["state"] = dates[i][2];
+	columnObject["time"] = dates[i][2];
 
 	for(var companyKey in companiesList) {
 		var url = "http://localhost:8983/solr/collection1/select?q=company%3A%22"+encodeURIComponent(companiesList[companyKey])+"%22&fq=postedDate%3A["+encodeURIComponent(startDate)+"+TO+"+encodeURIComponent(endDate)+"]&wt=json&indent=true&group=true&group.field=country&group.limit=0";
 		$.get(url, function(data) {
 			var countryCount = $.parseJSON(data).grouped.country.groups.length;
 			var company = $.parseJSON(data).responseHeader.params.q;
+			company = company.substring(9,company.length-2);
 			var dateIndex = $.parseJSON(data).responseHeader.params.fq;
 			//alert(company + " : " + countryCount);
 			count--;
 			//companyCountriesCount.push([company,countryCount]);
-			columnObject[company] = countryCount;
+			columnObject[company] = countryCount.toString();
 			//console.log("companyCountriesCount : " + companyCountriesCount);
 			if(count == 0) {
 				//timedCountriesCount.push(companyCountriesCount);
-				timedCountriesCount.push(columnObject);
+				var temp = JSON.parse(JSON.stringify(columnObject));
+				timedCountriesCount.push(temp);
 				console.log("timedCountriesCount : " + timedCountriesCount);
 				i--;
 				if(i >= 0) {
-					getCountriesCountByTime(companiesList, dates, dates[i][0], dates[i][1]);
+					getCountriesCountByTime(companiesList, dates, dates[i][0], dates[i][1], timedCountriesCount);
 				} else {
 					//Call D3 function to populate/build a stacked column graph by using timedCountriesCount
 					processData(timedCountriesCount);

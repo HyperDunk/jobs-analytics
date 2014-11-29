@@ -57,17 +57,17 @@ var svg = d3.select("body").append("svg")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 function processData (data) {
-  color.domain(d3.keys(data[0]).filter(function(key) { return key !== "State"; }));
+  color.domain(d3.keys(data[0]).filter(function(key) { return key !== "time"; }));
 
   data.forEach(function(d) {
     var y0 = 0;
     d.ages = color.domain().map(function(name) { return {name: name, y0: y0, y1: y0 += +d[name]}; });
     d.total = d.ages[d.ages.length - 1].y1;
   });
+  data.reverse();
+  //data.sort(function(a, b) { return b.total - a.total; });
 
-  data.sort(function(a, b) { return b.total - a.total; });
-
-  x.domain(data.map(function(d) { return d.State; }));
+  x.domain(data.map(function(d) { return d.time; }));
   y.domain([0, d3.max(data, function(d) { return d.total; })]);
 
   svg.append("g")
@@ -85,13 +85,13 @@ function processData (data) {
       .style("text-anchor", "end")
       .text("Population");
 
-  var state = svg.selectAll(".state")
+  var time = svg.selectAll(".time")
       .data(data)
     .enter().append("g")
       .attr("class", "g")
-      .attr("transform", function(d) { return "translate(" + x(d.State) + ",0)"; });
+      .attr("transform", function(d) { return "translate(" + x(d.time) + ",0)"; });
 
-  state.selectAll("rect")
+  time.selectAll("rect")
       .data(function(d) { return d.ages; })
     .enter().append("rect")
       .attr("width", x.rangeBand())
