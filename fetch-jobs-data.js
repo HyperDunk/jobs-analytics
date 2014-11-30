@@ -22,8 +22,8 @@ function query1(company, jobtype, title, startDate, endDate) {
 }
 
 var i = 0;
-
-function query2() {
+var timedQuickAccessByCompany;
+function query2(which) {
 	var timedCountriesCount = [];
 	var companiesList = ["Gestion Estrategica", "GB Consultora"];
 	var dates = [["2012-01-01T00:00:00Z","2012-01-31T00:00:00Z", "Jan12"],
@@ -51,7 +51,25 @@ function query2() {
 				["2013-11-01T00:00:00Z","2013-11-30T00:00:00Z", "Nov13"],
 				["2013-12-01T00:00:00Z","2013-12-31T00:00:00Z", "Dec13"]];
 	i = dates.length-1;
-	getCountriesCountByTime(companiesList, dates, dates[i][0], dates[i][1], timedCountriesCount);
+
+	var domains = new Object();
+	domains.Technical = "Analista";
+	domains.Residential = "Cocinero";
+	domains.Business = "Consultor";
+	var reverseDomains = new Object();
+	reverseDomains.Analista = "Technical";
+	reverseDomains.Cocinero = "Residential";
+	reverseDomains.Consultor = "Business";
+	var timedDomainCount = [];
+	timedQuickAccessByCompany = new Object;
+	var monthsIndex = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+	if( which == 1) {
+		getCountriesCountByTime(companiesList, dates, dates[i][0], dates[i][1], timedCountriesCount);
+	} else {
+		getJobsCountByDomain(companiesList, dates, timedDomainCount, domains, reverseDomains, timedQuickAccessByCompany, monthsIndex);
+	}
+	
 
 }
 
@@ -95,15 +113,66 @@ function getCountriesCountByTime(companiesList, dates, startDate, endDate, timed
 }
 
 
-function getJobsCountByDomain(companiesList, dates, startDate, endDate) {
+function getJobsCountByDomain(companiesList, dates, timedDomainCount, domains, reverseDomains, timedQuickAccessByCompany, monthsIndex) {
+	var count = companiesList.length;
 	var companyJobsCount = [];
 	var count = companiesList.length;
-
+	timedQuickAccessByCompany[dates[i][2]] = new Object();
 	for(var companyKey in companiesList) {
-		var url = "";
-	}	
+		timedQuickAccessByCompany[dates[i][2]][companiesList[companyKey]] = new Object();
+		for(var domain in domains) {
+			var url = "http://localhost:8983/solr/collection1/select?q=company%3A%22"+encodeURIComponent(companiesList[companyKey])+"%22%0Atitle%3A%22"+encodeURIComponent(domains[domain])+"%22&fq=postedDate%3A%5B"+encodeURIComponent(dates[i][0])+"+TO+"+encodeURIComponent(dates[i][1])+"%5D&rows=0&wt=json&indent=true";
+			$.get(url, function(data) {
+				var q = $.parseJSON(data).responseHeader.params.q;
+				var companyTemp = q.match(/company:(.*)\"/);
+				var company = companyTemp[1].substring(1,companyTemp[1].length);
+				var titleTemp = q.match(/title:(.*)\"/);
+				var title = titleTemp[1].substring(1,titleTemp[1].length);
+				var jobsCount = $.parseJSON(data).response.numFound;
+				var fq = $.parseJSON(data).responseHeader.params.fq;
+				var year = fq.substring(14,16);
+				var month = fq.substring(17,19);
+				//console.log(monthsIndex[month-1]+year);
+				timedQuickAccessByCompany[monthsIndex[month-1]+year][company][reverseDomains[title]] = jobsCount;
+				//console.log(timedQuickAccessByCompany);
+
+				count--;
+				if(count == 0) {
+					i--;
+					if(i >= 0) {
+						getJobsCountByDomain(companiesList, dates, timedDomainCount, domains, reverseDomains, timedQuickAccessByCompany, monthsIndex);
+					} else {
+						//Call D3 function to populate/build a stacked column graph
+						console.log(timedQuickAccessByCompany);
+						preProcessQuery2bData(timedQuickAccessByCompany, timedDomainCount);
+					}
+				}
+				
+			});			
+		}
+	}
 }
 
+function preProcessQuery2bData(data, timedDomainCount) {
+	for(t in data) {
+		//console.log(t);
+		var obj = new Object();
+		obj["State"] = t;
+		for(c in data[t]) {
+			//console.log(c);
+			var cnt = 0;
+			for(d in data[t][c]) {
+				cnt += data[t][c][d];
+			}
+			obj[c] = cnt;
+		}
+		timedDomainCount.push(obj);
+	}
+	console.log(timedDomainCount);
+	processData(timedDomainCount);
+}
+
+query2(2);
 
 function query4() {
 	var seasons = [["2012-01-01T00:00:00Z","2012-02-28T00:00:00Z"],	
