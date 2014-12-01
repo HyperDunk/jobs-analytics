@@ -164,7 +164,7 @@ function preProcessQuery2bData(data, timedDomainCount) {
 			for(d in data[t][c]) {
 				cnt += data[t][c][d];
 			}
-			obj[c] = cnt;
+			obj[c] = cnt.toString();
 		}
 		timedDomainCount.push(obj);
 	}
@@ -172,7 +172,6 @@ function preProcessQuery2bData(data, timedDomainCount) {
 	processData(timedDomainCount);
 }
 
-query2(2);
 
 function query4() {
 	var seasons = [["2012-01-01T00:00:00Z","2012-02-28T00:00:00Z"],	
