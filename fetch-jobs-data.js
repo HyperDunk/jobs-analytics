@@ -474,6 +474,27 @@ function preProcessQuery2bData(data, timedDomainCount) {
 }
 
 
+function query3(callBack) {
+	var southAmericanCountriesList = ["Colombia", "Chile", "Venezuela", "Peru", "Bolivia", "Brazil", "Ecuador", "Argentina", "Uruguay", "Paraguay"];
+	var query3DataList = [];
+	var count = southAmericanCountriesList.length;
+	for(var countryKey in southAmericanCountriesList) {
+		var url = "http://localhost:8983/solr/collection1/select?q=country%3A%22"+southAmericanCountriesList[countryKey]+"%22&rows=10&fl=latitude%2Clongitude%2Ccountry&wt=json&indent=true";
+		$.get(url, function(data) {
+			var docs = $.parseJSON(data).response.docs;
+			for(doc in docs) {
+				//console.log(docs[doc]);
+				query3DataList.push(docs[doc]);
+				count--;
+				if(count == 0) {
+					console.log(query3DataList);
+					callBack(query3DataList);					
+				}
+			}		
+		});
+	}
+}
+
 function query4() {
 	var seasons = [["2012-01-01T00:00:00Z","2012-02-28T00:00:00Z"],	
 				["2012-03-01T00:00:00Z","2012-05-31T00:00:00Z"],

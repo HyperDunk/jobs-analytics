@@ -1,0 +1,168 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <style type="text/css">
+
+body {
+   font-family: Arial, Helvetica, sans-serif;
+}
+
+.footer {
+    color: #888888;
+    font-size: 13px;
+    text-align: right;
+}
+
+#states path {
+  fill: #ccc;
+  stroke: #fff;
+}
+
+circle {
+  fill: steelblue;
+  fill-opacity: .6;
+  stroke: #fff;
+}
+
+    </style>
+
+ <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css" />
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+<script src="fetch-jobs-data.js"></script>
+<script src="http://d3js.org/d3.v2.js"></script>
+</head>
+<body>
+<div id="graph"></div>
+<p>
+</p>
+<script type="text/javascript">
+
+// Coded by Patrick.Brockmann@lsce.ipsl.fr
+
+$(document).ready(function() {
+
+var w = 1200;
+var h = 500;
+
+var xy = d3.geo.equirectangular()
+          .scale(1000);
+
+var path = d3.geo.path()
+    .projection(xy);
+
+var svg = d3.select("#graph").insert("svg:svg")
+  .attr("width", w)
+        .attr("height", h);
+
+var states = svg.append("svg:g")
+    .attr("id", "states");
+
+var circles = svg.append("svg:g")
+    .attr("id", "circles");
+
+var labels = svg.append("svg:g")
+    .attr("id", "labels");
+
+d3.json("world-countries.json", function(collection) {
+  states.selectAll("path")
+      .data(collection.features)
+    .enter().append("svg:path")
+      .attr("d", path)
+            .on("mouseover", function(d) {
+                d3.select(this).style("fill","#6C0")
+                    .append("svg:title")
+                    .text(d.properties.name);})
+            .on("mouseout", function(d) {
+                d3.select(this).style("fill","#ccc");})
+});
+
+
+//http://stackoverflow.com/questions/11386150/lat-lon-positon-on-a-d3-js-map
+// +convert to string to number
+
+var scalefactor=1./50. ;
+
+var datalist = [
+  {
+    "country":"America",
+    "latitude":41,
+    "longitude":-103}
+   ,
+      {
+    "country":"chile",
+    "latitude":-35.6,
+    "longitude":-71.5}
+   ,
+    {
+    "country":"argentina",
+    "latitude":23.6,
+    "longitude":-102.5}
+   ,
+      {
+    "country":"sas",
+    "latitude":46.22,
+    "longitude":2.2}
+   , 
+    {"country":"nowhere",
+    "latitude":40.4,
+    "longitude":-3.7}
+   ,
+      {
+    "country":"quest",
+    "latitude":6.4,
+    "longitude":-66.5}
+    ,
+  {  "country":"what",
+    "latitude":-9.1,
+    "longitude":-75}
+  
+    ]
+
+
+function processData(csv) {
+  circles.selectAll("circle")
+      .data(csv)
+    .enter()
+    .append("svg:circle")
+      .attr("cx", function(d, i) { return xy([+Number(d["longitude"]),+Number(d["latitude"])])[0]; })
+      .attr("cy", function(d, i) { return xy([+Number(d["longitude"]),+Number(d["latitude"])])[1]; })
+      .attr("r",  function(d) { return (+d["1990"])*scalefactor; })
+      .attr("title",  function(d) { return d["country"]+": "+Math.round(d["1990"]); })
+            .on("mouseover", function(d) {
+                d3.select(this).style("fill","#FC0");})
+            .on("mouseout", function(d) {
+                d3.select(this).style("fill","red");});
+
+
+}
+
+//processData(datalist);
+query3(processData);
+var arrayLength = datalist.length;
+for (var i = 0; i < arrayLength; i++) {
+   redraw(1);
+}
+
+function redraw(year) {
+//if((function(d) { return d["country"]}).localeCompare("argentina")){
+      circles.selectAll("circle")
+    .transition()
+          .duration(10).ease("linear")
+          .attr("r",  function(d) { if(d[year]!=0)return 2;})
+          .attr("title",  function(d) { return d["country"]+": "+Math.round(d[year]); });
+  // }
+}
+
+
+});
+
+</script>
+
+<div class="footer">
+</div>
+
+</body>
+
+</html>
