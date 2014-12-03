@@ -478,13 +478,17 @@ function query3(callBack) {
 	var southAmericanCountriesList = ["Colombia", "Chile", "Venezuela", "Peru", "Bolivia", "Brazil", "Ecuador", "Argentina", "Uruguay", "Paraguay"];
 	var query3DataList = [];
 	var count = southAmericanCountriesList.length;
+	var lati, longi;
 	for(var countryKey in southAmericanCountriesList) {
 		var url = "http://localhost:8983/solr/collection1/select?q=country%3A%22"+southAmericanCountriesList[countryKey]+"%22&rows=10&fl=latitude%2Clongitude%2Ccountry&wt=json&indent=true";
 		$.get(url, function(data) {
 			var docs = $.parseJSON(data).response.docs;
 			for(doc in docs) {
 				//console.log(docs[doc]);
+				docs[doc].latitude = Number(docs[doc].latitude);
+				docs[doc].longitude = Number(docs[doc].longitude);
 				query3DataList.push(docs[doc]);
+				
 				count--;
 				if(count == 0) {
 					console.log(query3DataList);
