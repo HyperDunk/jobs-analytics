@@ -25,6 +25,8 @@ circle {
   stroke: #fff;
 }
 
+.ui-menu { width: 200px; }
+
     </style>
 
 
@@ -53,6 +55,36 @@ circle {
 
 $(document).ready(function() {
 
+var Jobsdata = {
+    'Tiempo Completo':'Tiempo Completo' ,
+    'Por Horas, Desde Casa':'Por Horas, Desde Casa',
+	'Temporal':'Temporal' ,
+    'Beca/PrÃƒ ¡cticas':'Beca/PrÃƒ ¡cticas',
+	'Desde Casa':'Desde Casa'
+}
+
+
+var s = $('<select id="Jobsmenu" />');
+
+for(var val in Jobsdata) {
+    $('<option />', {value: val, text: Jobsdata[val]}).appendTo(s);
+}
+s.appendTo('body');
+// Company Menu
+
+var companyData = {
+    'Gestion Estrategica':'Gestion Estrategica' ,
+    'c':'d'
+}
+
+
+var s = $('<select id="Companymenu" />');
+
+for(var val in companyData) {
+    $('<option />', {value: val, text: companyData[val]}).appendTo(s);
+}
+
+s.appendTo('body');
 
 var sizes = ['Jan12', 'Feb12', 'Mar12', 'Apr12', 'May12', 'Jun12', 'Jul12', 'Aug12', 'Sep12', 'Oct12', 'Nov12', 'Dec12',
 'Jan13', 'Feb13', 'Mar13', 'Apr13', 'May13', 'Jun13', 'Jul13', 'Aug13', 'Sep13', 'Oct13', 'Nov13', 'Dec13'];
@@ -79,6 +111,12 @@ $("#slider-size").slider({
     redraw(ui.value.toString());
   }
 }); **/
+$(function() {
+    $( "#Companymenu" ).menu();
+  });
+$(function() {
+    $( "#Jobsmenu" ).menu();
+  });
 $("#year").val($("#slider-size").slider("value") );
 
 var w = 1200;
@@ -176,7 +214,14 @@ function processData(csv) {
 
 }
 //processData(datalist);
-query1("Gestion Estrategica","Tiempo Completo", processData);
+// query1("Gestion Estrategica",$("#menu option:selected").text(), processData);
+$( "#Jobsmenu" ).change(function() {
+  query1($("#Companymenu option:selected").text(),$("#Jobsmenu option:selected").text(), processData);
+});
+
+$( "#Companymenu" ).change(function() {
+  query1($("#Companymenu option:selected").text(),$("#Jobsmenu option:selected").text(), processData);
+});
 function redraw(year) {
       circles.selectAll("circle")
     .transition()
@@ -192,10 +237,12 @@ function redraw(year) {
 
 console.log("UI is loaded: "+$.ui);
 </script>
-
+<div id="Jobs DD">
+</div>
+<div id="Company DD">
+</div>
 <div class="footer">
 </div>
-
 </body>
 
 </html>
