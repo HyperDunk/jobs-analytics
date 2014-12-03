@@ -500,19 +500,56 @@ function query3(callBack) {
 }
 
 function query4() {
-	var seasons = [["2012-01-01T00:00:00Z","2012-02-28T00:00:00Z"],	
-				["2012-03-01T00:00:00Z","2012-05-31T00:00:00Z"],
-				["2012-06-01T00:00:00Z","2012-08-31T00:00:00Z"],
-				["2012-09-01T00:00:00Z","2012-11-30T00:00:00Z"],
-				["2012-12-01T00:00:00Z","2013-02-28T00:00:00Z"],
-				["2013-03-01T00:00:00Z","2013-05-31T00:00:00Z"],
-				["2013-06-01T00:00:00Z","2013-08-31T00:00:00Z"],
-				["2013-09-01T00:00:00Z","2013-11-30T00:00:00Z"],
-				["2013-12-01T00:00:00Z","2013-12-31T00:00:00Z"]];
+	var seasons = [["2012-01-01T00:00:00Z","2012-02-28T00:00:00Z", "Winter11-12"],	
+				["2012-03-01T00:00:00Z","2012-05-31T00:00:00Z", "Spring12"],
+				["2012-06-01T00:00:00Z","2012-08-31T00:00:00Z", "Summer12"],
+				["2012-09-01T00:00:00Z","2012-11-30T00:00:00Z", "Autumn12"],
+				["2012-12-01T00:00:00Z","2013-02-28T00:00:00Z", "Winter12-13"],
+				["2013-03-01T00:00:00Z","2013-05-31T00:00:00Z", "Spring13"],
+				["2013-06-01T00:00:00Z","2013-08-31T00:00:00Z", "Summer13"],
+				["2013-09-01T00:00:00Z","2013-11-30T00:00:00Z", "Autumn13"],
+				["2013-12-01T00:00:00Z","2013-12-31T00:00:00Z", "Winter13-14"]];
 
-	
+	var jobTypeList = ["Tiempo Completo", "Por Horas, Desde Casa", "Temporal", "Beca/PrÃƒ ¡cticas", "Desde Casa"];
+
+	var seasonalJobsCount = [];
+	i = seasons.length-1;
+
+	getJobsCountByJobType(seasons, jobTypeList, seasonalJobsCount);
 }
 
-function getJobsCountByJobType() {
+function getJobsCountByJobType(seasons, jobTypeList, seasonalJobsCount) {
 	
-}
+	var count = jobTypeList.length;
+	var columnObject = new Object();
+	columnObject["time"] = seasons[i][2];
+
+	for(var jobTypeKey in jobTypeList) {
+		var url = "http://localhost:8983/solr/collection1/select?q=jobtype%3A%22"+encodeURIComponent(jobTypeList[jobTypeKey])+"%22&fq=postedDate%3A%5B"+encodeURIComponent(seasons[i][0])+"+TO+"+encodeURIComponent(seasons[i][1])+"%5D&rows=0&wt=json&indent=true";
+		$.get(url, function(data) {
+			var jobsCount = $.parseJSON(data).response.numFound;
+			var q = $.parseJSON(data).responseHeader.params.q;
+			var jobtypeTemp = q.match(/jobtype:(.*)\"/);
+			var jobtype = jobtypeTemp[1].substring(1,jobtypeTemp[1].length);
+			//console.log(jobtype);
+			count--;	
+
+			columnObject[jobtype] = jobsCount.toString();
+			
+			if(count == 0) {
+				
+				var temp = JSON.parse(JSON.stringify(columnObject));
+				seasonalJobsCount.push(temp);				
+				i--;
+				if(i >= 0) {
+					getJobsCountByJobType(seasons, jobTypeList, seasonalJobsCount);
+				} else {
+					//Call D3 function to populate/build a stacked column graph
+					processData(seasonalJobsCount);
+				}
+				
+			}		
+		});
+
+	}
+}	
